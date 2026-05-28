@@ -101,8 +101,12 @@ func GetUserLoginDate(c *echo.Context) string {
 }
 
 func login(c *echo.Context) error {
+	// session.Get 在浏览器存在无法解码的旧 cookie 时会返回一个全新的可用 session 并附带非致命错误,
+	// 此时不应中断登录(否则换密钥/残留旧 cookie 会导致永远登录失败,提示"保存登陆状态失败");
+	// 后续 sess.Save 会用新 cookie 覆盖旧的。只有 sess 为 nil(session 中间件未挂载)才是真正的内部错误。
 	sess, err := session.Get(sessionName, c)
-	if err != nil {
+	if sess == nil {
+		log.Println("[auth] 获取 session 失败:", err)
 		return c.HTMLBlob(http.StatusBadRequest, internalErrorSave)
 	}
 	username := c.FormValue("username")

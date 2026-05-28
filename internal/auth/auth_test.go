@@ -155,6 +155,34 @@ func TestLogin_Success_RedirectsAndSetsSession(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec2.Code, "带 session 访问受保护路由应 200")
 }
 
+// TestLogin_Success_WithStaleCookie 验证浏览器带着无法解码的旧 cookie 时仍能正常登录
+// (回归: 旧逻辑会把 session.Get 的非致命解码错误当成致命错误, 提示"保存登陆状态失败")
+func TestLogin_Success_WithStaleCookie(t *testing.T) {
+	orig := saveAppFlags()
+	defer restoreAppFlags(orig)
+	define.AppFlags.DisableLoginMode = false
+	define.AppFlags.CookieName = "flare"
+	define.AppFlags.Port = 5005
+	define.AppFlags.User = "testuser"
+	define.AppFlags.Pass = "testpass"
+	define.AppFlags.CookieSecret = "test-secret-for-session"
+
+	e := echo.New()
+	RequestHandle(e)
+
+	loginBody := strings.NewReader("username=testuser&password=testpass")
+	req := httptest.NewRequest(http.MethodPost, define.MiscPages.Login.Path, loginBody)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	// 携带一个无法用当前密钥解码的旧 cookie
+	req.Header.Set("Cookie", RequestHandleSessionName("flare", 5005)+"=corrupted-undecodable-value")
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusFound, rec.Code, "带无效旧 cookie 时登录仍应成功 302")
+	assert.Equal(t, define.SettingPages.Others.Path, rec.Header().Get("Location"))
+	require.NotEmpty(t, rec.Header().Get("Set-Cookie"), "应写入新的 session cookie 覆盖旧的")
+}
+
 // TestLogin_WrongPassword_Returns400 验证错误用户名或密码时返回 400 且不设置 session
 func TestLogin_WrongPassword_Returns400(t *testing.T) {
 	orig := saveAppFlags()

@@ -1,17 +1,9 @@
 name: "Security Scan"
 
-# Run workflow each time code is pushed to your repository and on a schedule.
-# The scheduled workflow runs every at 00:00 on Sunday UTC time.
+# 在 PR、每周定时(周日 00:00 UTC)以及手动触发时运行安全扫描；
+# 不再对每次 push 到 main 触发,避免与 CI 重复刷屏。
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "internal/**"
-      - "pkg/**"
-      - "cmd/**"
-      - "*.go"
   pull_request:
     branches:
       - main
