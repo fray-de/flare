@@ -69,16 +69,16 @@ func getIconifyIcon(name string) string {
 	}
 
 	iconifyMu.Lock()
-	if v, ok := iconifyRendered[cacheKey]; ok {
+	if v, hit := iconifyRendered[cacheKey]; hit {
 		iconifyMu.Unlock()
 		return v
 	}
 	iconifyMu.Unlock()
 
 	// singleflight 保证同一图标并发只拉取一次
-	v, _, _ := iconifyGroup.Do(cacheKey, func() (interface{}, error) {
+	v, doErr, _ := iconifyGroup.Do(cacheKey, func() (interface{}, error) {
 		iconifyMu.Lock()
-		if cached, ok := iconifyRendered[cacheKey]; ok {
+		if cached, hit := iconifyRendered[cacheKey]; hit {
 			iconifyMu.Unlock()
 			return cached, nil
 		}
@@ -100,8 +100,11 @@ func getIconifyIcon(name string) string {
 		return renderIconify(mini, fileName, data), nil
 	})
 
-	rendered, _ := v.(string)
-	if rendered == "" {
+	if doErr != nil {
+		return _EMPTY_ICON
+	}
+	rendered, ok := v.(string)
+	if !ok || rendered == "" {
 		return _EMPTY_ICON
 	}
 
