@@ -18,6 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/tdewolff/minify/v2 v2.24.8
+	golang.org/x/sync v0.20.0
 	gopkg.in/ini.v1 v1.67.1
 )
 

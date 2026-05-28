@@ -4,6 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -32,6 +33,9 @@ func Init() error {
 	}
 	_CACHE_MDI_ICON_EXIST = make(map[string]bool)
 	_CACHE_MDI_ICON_DATA = make(map[string]string)
+	if err := initIconify(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -42,6 +46,9 @@ func RegisterRouting(e *echo.Echo) {
 	if mdiExample, err := fs.Sub(MdiExampleAssets, "mdi-cheat-sheets"); err == nil {
 		e.StaticFS(define.RegularPages.Icons.Path, mdiExample)
 	}
+	if iconifyCacheDir != "" {
+		e.StaticFS(_ICONIFY_WEB_URI, os.DirFS(iconifyCacheDir))
+	}
 }
 
 const _EMPTY_ICON = ""
@@ -49,6 +56,10 @@ const _EMPTY_ICON = ""
 func GetIconByName(name string) string {
 	if name == "" {
 		return _EMPTY_ICON
+	}
+	// 含冒号视为 Iconify 图标(prefix:name)，否则走内置 MDI 逻辑(完全向后兼容)
+	if strings.Contains(name, ":") {
+		return getIconifyIcon(name)
 	}
 	icon := iconMap[strings.ToLower(name)]
 	if icon == "" {
