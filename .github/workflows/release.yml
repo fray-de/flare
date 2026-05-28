@@ -64,3 +64,5 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 推送到你自己的 Docker Hub 命名空间；未设置则回退 soulteary/flare
+          DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/flare

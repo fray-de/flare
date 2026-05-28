@@ -1,5 +1,10 @@
 project_name: flare
 
+# Docker Hub 命名空间可配置：设置环境变量 DOCKER_IMAGE(如 your-name/flare)即可覆盖；
+# 未设置时回退到上游默认 soulteary/flare。
+env:
+  - IMAGE={{ if isEnvSet "DOCKER_IMAGE" }}{{ .Env.DOCKER_IMAGE }}{{ else }}soulteary/flare{{ end }}
+
 before:
   hooks:
     - go run build/build.go
@@ -25,8 +30,8 @@ builds:
 dockers:
 
   - image_templates:
-      - "soulteary/flare:linux-amd64-{{ .Tag }}"
-      - "soulteary/flare:linux-amd64"
+      - "{{ .Env.IMAGE }}:linux-amd64-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-amd64"
     dockerfile: docker/goreleaser/Dockerfile.amd64
     use: buildx
     goarch: amd64
@@ -43,8 +48,8 @@ dockers:
       - "--label=org.opencontainers.image.licenses=AGPL-v3"
 
   - image_templates:
-      - "soulteary/flare:linux-arm64-{{ .Tag }}"
-      - "soulteary/flare:linux-arm64"
+      - "{{ .Env.IMAGE }}:linux-arm64-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-arm64"
     dockerfile: docker/goreleaser/Dockerfile.arm64v8
     use: buildx
     goos: linux
@@ -63,8 +68,8 @@ dockers:
       - "--label=org.opencontainers.image.licenses=AGPL-v3"
 
   - image_templates:
-      - "soulteary/flare:linux-armv7-{{ .Tag }}"
-      - "soulteary/flare:linux-armv7"
+      - "{{ .Env.IMAGE }}:linux-armv7-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-armv7"
     dockerfile: docker/goreleaser/Dockerfile.arm32v7
     use: buildx
     goos: linux
@@ -83,8 +88,8 @@ dockers:
       - "--label=org.opencontainers.image.licenses=AGPL-v3"
 
   - image_templates:
-      - "soulteary/flare:linux-armv6-{{ .Tag }}"
-      - "soulteary/flare:linux-armv6"
+      - "{{ .Env.IMAGE }}:linux-armv6-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-armv6"
     dockerfile: docker/goreleaser/Dockerfile.arm32v6
     use: buildx
     goos: linux
@@ -104,18 +109,18 @@ dockers:
 
 
 docker_manifests:
-  - name_template: "soulteary/flare:{{ .Tag }}"
+  - name_template: "{{ .Env.IMAGE }}:{{ .Tag }}"
     image_templates:
-      - "soulteary/flare:linux-amd64-{{ .Tag }}"
-      - "soulteary/flare:linux-arm64-{{ .Tag }}"
-      - "soulteary/flare:linux-armv7-{{ .Tag }}"
-      - "soulteary/flare:linux-armv6-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-amd64-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-arm64-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-armv7-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-armv6-{{ .Tag }}"
     skip_push: "false"
 
-  - name_template: "soulteary/flare:latest"
+  - name_template: "{{ .Env.IMAGE }}:latest"
     image_templates:
-      - "soulteary/flare:linux-amd64-{{ .Tag }}"
-      - "soulteary/flare:linux-arm64-{{ .Tag }}"
-      - "soulteary/flare:linux-armv7-{{ .Tag }}"
-      - "soulteary/flare:linux-armv6-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-amd64-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-arm64-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-armv7-{{ .Tag }}"
+      - "{{ .Env.IMAGE }}:linux-armv6-{{ .Tag }}"
     skip_push: "false"

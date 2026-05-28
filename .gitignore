@@ -35,3 +35,5 @@ bookmarks.yml
 config.yml
 
 RELEASE_*
+# GoReleaser 本地快照产物
+/dist/
