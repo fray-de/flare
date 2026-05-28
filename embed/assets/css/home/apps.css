@@ -1,10 +1,12 @@
 #container-apps .apps-container {
   width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 20px;
 }
 
 #container-apps .apps-container .app-container {
-  float: left;
-  width: 25%;
+  width: auto;
 }
 
 #container-apps .apps-container .app-item {
@@ -75,8 +77,14 @@
 }
 
 
+@media (max-width: 1000px) {
+  #container-apps .apps-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 767px) {
-  #container-apps .apps-container .app-container {
-    width: 50%;
+  #container-apps .apps-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
