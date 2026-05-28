@@ -112,7 +112,7 @@ func loadBookmarksFromYamlFile(name string, isFavorite bool) (model.Bookmarks, e
 		}
 		return result, nil
 	}
-	configFile, err := readFileCached(name, func() ([]byte, error) { return readFile(filePath) })
+	configFile, err := readFileCached(name, filePath, func() ([]byte, error) { return readFile(filePath) })
 	if err != nil {
 		return result, fmt.Errorf("读取配置文件 %s: %w", name, err)
 	}

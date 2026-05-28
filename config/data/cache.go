@@ -1,83 +1,59 @@
 package data
 
 import (
+	"os"
 	"sync"
+	"time"
 )
+
+type fileCacheEntry struct {
+	data    []byte
+	modTime time.Time
+	size    int64
+}
 
 var (
-	fileCacheMu     sync.RWMutex
-	cachedConfig    []byte
-	cachedApps      []byte
-	cachedBookmarks []byte
+	fileCacheMu sync.RWMutex
+	fileCache   = map[string]*fileCacheEntry{}
 )
 
-func readFileCached(name string, readDisk func() ([]byte, error)) ([]byte, error) {
+// readFileCached 读取并缓存配置文件内容。
+// 缓存基于文件的 mtime + size 自动失效: 直接修改磁盘上的 yml 后, 下次请求(刷新页面)即热加载,
+// 无需重启容器或经设置页保存。文件未变化时走内存缓存, 仅多一次 os.Stat, 开销可忽略。
+func readFileCached(name, filePath string, readDisk func() ([]byte, error)) ([]byte, error) {
+	fi, statErr := os.Stat(filePath)
+	fresh := func(e *fileCacheEntry) bool {
+		return e != nil && statErr == nil && fi.ModTime().Equal(e.modTime) && fi.Size() == e.size
+	}
+
 	fileCacheMu.RLock()
-	var cached *[]byte
-	switch name {
-	case "config":
-		cached = &cachedConfig
-	case "apps":
-		cached = &cachedApps
-	case "bookmarks":
-		cached = &cachedBookmarks
-	default:
-		fileCacheMu.RUnlock()
-		return readDisk()
-	}
-	if *cached != nil {
-		b := *cached
-		fileCacheMu.RUnlock()
-		return b, nil
-	}
+	entry := fileCache[name]
 	fileCacheMu.RUnlock()
+	if fresh(entry) {
+		return entry.data, nil
+	}
 
 	fileCacheMu.Lock()
 	defer fileCacheMu.Unlock()
-	switch name {
-	case "config":
-		if cachedConfig != nil {
-			return cachedConfig, nil
-		}
-		b, err := readDisk()
-		if err != nil {
-			return nil, err
-		}
-		cachedConfig = b
-		return cachedConfig, nil
-	case "apps":
-		if cachedApps != nil {
-			return cachedApps, nil
-		}
-		b, err := readDisk()
-		if err != nil {
-			return nil, err
-		}
-		cachedApps = b
-		return cachedApps, nil
-	case "bookmarks":
-		if cachedBookmarks != nil {
-			return cachedBookmarks, nil
-		}
-		b, err := readDisk()
-		if err != nil {
-			return nil, err
-		}
-		cachedBookmarks = b
-		return cachedBookmarks, nil
+	if entry = fileCache[name]; fresh(entry) {
+		return entry.data, nil
 	}
-	return readDisk()
+
+	b, err := readDisk()
+	if err != nil {
+		return nil, err
+	}
+	newEntry := &fileCacheEntry{data: b}
+	if statErr == nil {
+		newEntry.modTime = fi.ModTime()
+		newEntry.size = fi.Size()
+	}
+	fileCache[name] = newEntry
+	return b, nil
 }
 
 func invalidateFileCache(name string) {
 	fileCacheMu.Lock()
 	defer fileCacheMu.Unlock()
-	switch name {
-	case "config":
-		cachedConfig = nil
-	case "apps":
-		cachedApps = nil
-	case "bookmarks":
-		cachedBookmarks = nil
-	}
+	delete(fileCache, name)
 }
