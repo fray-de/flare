@@ -41,7 +41,8 @@ func Init() error {
 
 func RegisterRouting(e *echo.Echo) {
 	if weather, err := fs.Sub(MemFs, _ASSETS_BASE_DIR); err == nil {
-		e.StaticFS(_ASSETS_WEB_URI, weather)
+		// 用 seekableFS 包装: memfs 文件不实现 io.ReadSeeker，echo 静态处理会 500
+		e.StaticFS(_ASSETS_WEB_URI, seekableFS{inner: weather})
 	}
 	if mdiExample, err := fs.Sub(MdiExampleAssets, "mdi-cheat-sheets"); err == nil {
 		e.StaticFS(define.RegularPages.Icons.Path, mdiExample)
