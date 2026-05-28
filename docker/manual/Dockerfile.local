@@ -1,12 +1,14 @@
-# 本地一键构建（含 Iconify 按需图标支持）
+# 本地 / CI 一键构建（含 Iconify 按需图标支持）
 # 直接编译仓库内已生成的源码，无需先构建 flare-base 基础镜像。
-FROM golang:1.26-alpine AS builder
+# 始终在原生架构上交叉编译到目标架构，避免 buildx 多架构时用 QEMU 模拟编译器。
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS builder
+ARG TARGETOS
+ARG TARGETARCH
 WORKDIR /app
 ENV CGO_ENABLED=0
-ENV GOPROXY=https://goproxy.cn,direct
 COPY . .
-# 若存在 vendor/ 则离线构建，否则按 GOPROXY 拉取依赖
-RUN go build -ldflags "-w -s" -o flare main.go
+# 若存在 vendor/ 则离线构建，否则按默认 GOPROXY 拉取依赖
+RUN GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -ldflags "-w -s" -o flare main.go
 
 FROM alpine:3.20
 COPY --from=builder /app/flare /bin/flare
