@@ -31,7 +31,12 @@ func RequestHandleSessionName(cookieName string, port int) string {
 func RequestHandle(e *echo.Echo) {
 	sessionName = RequestHandleSessionName(define.AppFlags.CookieName, define.AppFlags.Port)
 	if !define.AppFlags.DisableLoginMode {
-		if define.AppFlags.CookieSecret == define.DEFAULT_COOKIE_SECRET {
+		// 空密钥会让 cookie 无法签名, 登录时 sess.Save 必然失败; 兜底回退到默认值, 避免整站无法登录
+		switch define.AppFlags.CookieSecret {
+		case "":
+			log.Println("[auth] 警告: CookieSecret 为空，已回退为默认值；生产环境请通过 FLARE_COOKIE_SECRET 或 --cookie-secret 设置强密钥")
+			define.AppFlags.CookieSecret = define.DEFAULT_COOKIE_SECRET
+		case define.DEFAULT_COOKIE_SECRET:
 			log.Println("[auth] 警告: 已启用登录但 CookieSecret 仍为默认值，生产环境请通过 FLARE_COOKIE_SECRET 或 --cookie-secret 设置强密钥")
 		}
 		store := sessions.NewCookieStore([]byte(define.AppFlags.CookieSecret))

@@ -66,6 +66,10 @@ func ParseEnvVars() (stor model.Flags) {
 	stor.EnableOfflineMode = defaults.EnableOfflineMode
 	stor.EnableEditor = defaults.EnableEditor
 	stor.DisableCSP = defaults.DisableCSP
+	// Cookie 配置必须一并合并: 否则 CookieSecret 为空, 会导致 cookie 无法签名,
+	// 登录时 sess.Save 必然失败并提示"保存登陆状态失败"; 同时 FLARE_COOKIE_SECRET 也会被忽略。
+	stor.CookieName = defaults.CookieName
+	stor.CookieSecret = defaults.CookieSecret
 
 	return stor
 }

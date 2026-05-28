@@ -43,6 +43,24 @@ func TestParseEnvVars(t *testing.T) {
 	assert.Equal(t, flags.EnableOfflineMode, defaultEnvs.EnableOfflineMode)
 }
 
+// TestParseEnvVars_CookieDefaultsAndOverride 回归: CookieSecret/CookieName 必须被合并,
+// 否则 CookieSecret 为空会导致登录时"保存登陆状态失败"。
+func TestParseEnvVars_CookieDefaultsAndOverride(t *testing.T) {
+	// 默认: 未设置环境变量时应回退到内置默认值(非空)
+	os.Unsetenv("FLARE_COOKIE_SECRET")
+	os.Unsetenv("FLARE_COOKIE_NAME")
+	flags := cmd.ParseEnvVars()
+	assert.Equal(t, define.DEFAULT_COOKIE_SECRET, flags.CookieSecret, "CookieSecret 默认应为内置默认值且非空")
+	assert.NotEmpty(t, flags.CookieSecret, "CookieSecret 不能为空, 否则 cookie 无法签名")
+	assert.Equal(t, define.DEFAULT_COOKIE_NAME, flags.CookieName)
+
+	// 覆盖: 设置 FLARE_COOKIE_SECRET 时应被采用(此前会被静默忽略)
+	os.Setenv("FLARE_COOKIE_SECRET", "my-strong-secret")
+	defer os.Unsetenv("FLARE_COOKIE_SECRET")
+	flags = cmd.ParseEnvVars()
+	assert.Equal(t, "my-strong-secret", flags.CookieSecret, "FLARE_COOKIE_SECRET 应生效")
+}
+
 func TestInitAccountFromEnvVars_normal(t *testing.T) {
 	defaultEnvs := define.DefaultEnvVars
 
