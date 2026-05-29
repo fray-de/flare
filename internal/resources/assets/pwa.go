@@ -14,6 +14,9 @@ import (
 //go:embed pwa-icons/android-chrome-192x192.png pwa-icons/android-chrome-512x512.png pwa-icons/apple-touch-icon.png pwa-icons/maskable-512x512.png
 var pwaIcons embed.FS
 
+//go:embed sw.js register-sw.js
+var pwaScripts embed.FS
+
 func servePwaIcon(file string) echo.HandlerFunc {
 	return func(c *echo.Context) error {
 		data, err := fs.ReadFile(pwaIcons, "pwa-icons/"+file)
@@ -47,10 +50,32 @@ func manifestHandler(c *echo.Context) error {
 	return c.Blob(http.StatusOK, "application/manifest+json", []byte(manifest))
 }
 
+// serveScript 托管 PWA 用到的 JS(sw.js / register-sw.js)。
+// noCache=true 用于 sw.js: 浏览器需每次校验以发现新版本; allowScope 给 sw.js 设根作用域。
+func serveScript(file string, noCache, allowScope bool) echo.HandlerFunc {
+	return func(c *echo.Context) error {
+		data, err := fs.ReadFile(pwaScripts, file)
+		if err != nil {
+			return echo.ErrNotFound
+		}
+		if noCache {
+			c.Response().Header().Set("Cache-Control", "no-cache")
+		} else {
+			c.Response().Header().Set("Cache-Control", "public, max-age=86400")
+		}
+		if allowScope {
+			c.Response().Header().Set("Service-Worker-Allowed", "/")
+		}
+		return c.Blob(http.StatusOK, "text/javascript; charset=utf-8", data)
+	}
+}
+
 func registerPWA(e *echo.Echo) {
 	e.GET("/android-chrome-192x192.png", servePwaIcon("android-chrome-192x192.png"))
 	e.GET("/android-chrome-512x512.png", servePwaIcon("android-chrome-512x512.png"))
 	e.GET("/maskable-512x512.png", servePwaIcon("maskable-512x512.png"))
 	e.GET("/apple-touch-icon.png", servePwaIcon("apple-touch-icon.png"))
 	e.GET("/manifest.webmanifest", manifestHandler)
+	e.GET("/sw.js", serveScript("sw.js", true, true))
+	e.GET("/register-sw.js", serveScript("register-sw.js", false, false))
 }

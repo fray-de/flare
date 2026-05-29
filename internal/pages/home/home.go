@@ -22,7 +22,9 @@ import (
 
 const _weatherLocationDetectTimeout = 5 * time.Second
 
-const _cspValue = "script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';"
+// script-src 'self': 仅放行同源脚本(用于 Service Worker 注册),仍禁止内联与第三方脚本;
+// 其余指令维持原有强度。
+const _cspValue = "script-src 'self'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; report-uri 'none';"
 
 func setCSPHeader(c *echo.Context) {
 	if !define.AppFlags.DisableCSP {
