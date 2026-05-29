@@ -20,6 +20,8 @@ var Favicon embed.FS
 func RegisterRouting(e *echo.Echo) {
 	e.Use(optimizeResourceCacheTime())
 
+	registerPWA(e)
+
 	e.GET("/favicon.ico", func(c *echo.Context) error {
 		c.Response().Header().Set("Cache-Control", "public, max-age=31536000")
 		data, err := fs.ReadFile(Favicon, "favicon.ico")

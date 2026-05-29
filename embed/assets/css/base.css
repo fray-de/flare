@@ -125,6 +125,10 @@ h2 a {
     width: 90%;
     padding: 20px;
     margin: 0 auto;
+    /* 刘海屏/独立窗口安全区 */
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    padding-top: max(20px, env(safe-area-inset-top));
   }
 }
 @media (max-width: 375px) {
@@ -132,6 +136,9 @@ h2 a {
     width: 100%;
     padding: 20px;
     margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-top: max(20px, env(safe-area-inset-top));
   }
 }
 

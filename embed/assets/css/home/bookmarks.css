@@ -85,4 +85,9 @@
   #container-bookmakrs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  /* 移动端加大点击热区 */
+  #container-bookmakrs .bookmark-group-container .bookmark-list a.bookmark {
+    line-height: 2.4;
+    padding: 2px 0;
+  }
 }

@@ -47,7 +47,8 @@ func (r *Renderer) Render(c *echo.Context, w io.Writer, templateName string, dat
 }
 
 var templateFuncMap = template.FuncMap{
-	"T": i18n.T,
+	"T":          i18n.T,
+	"themeColor": define.CurrentThemeColor,
 }
 
 func RegisterRouting(e *echo.Echo) error {

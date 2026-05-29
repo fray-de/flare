@@ -65,6 +65,18 @@ func GetThemePrimaryColor(theme string) string {
 	return CACHE_APP_CURRENT_THEME_PRIMARY_COLOR
 }
 
+// CurrentThemeColor 返回当前主题的背景色(十六进制),用于 PWA manifest 与 <meta name="theme-color">。
+// 实时读取当前主题名,换主题后即时反映。
+func CurrentThemeColor() string {
+	theme := data.GetThemeName()
+	for _, themePresent := range ThemePalettes {
+		if themePresent.Name == theme {
+			return themePresent.Colors.Background
+		}
+	}
+	return "#1a1a1a"
+}
+
 const emptyPageBodyStyle = template.CSS(``)
 
 func UpdatePagePalettes() {
